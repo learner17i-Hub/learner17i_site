@@ -5,11 +5,13 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import BlogList from './pages/BlogList'
 import BlogDetail from './pages/BlogDetail'
+import BlogEdit from './pages/BlogEdit'
 import Resume from './pages/Resume'
 import ChatLobby from './pages/ChatLobby'
 import ChatRoom from './pages/ChatRoom'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import WeightDiary from './pages/WeightDiary'
 import api from './api'
 
 export default function App() {
@@ -38,13 +40,16 @@ export default function App() {
       <main style={{ flex: 1, minHeight: 'calc(100vh - 130px)' }}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/blog" element={<BlogList />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
-          <Route path="/resume" element={<Resume />} />
+          <Route path="/blog" element={<BlogList user={user} />} />
+          <Route path="/blog/new" element={<BlogEdit user={user} />} />
+          <Route path="/blog/:id" element={<BlogDetail user={user} />} />
+          <Route path="/blog/:id/edit" element={<BlogEdit user={user} />} />
+          <Route path="/resume" element={<Resume user={user} />} />
           <Route path="/chat" element={<ChatLobby user={user} />} />
           <Route path="/chat/:roomName" element={<ChatRoom user={user} />} />
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/register" element={<Register setUser={setUser} />} />
+          <Route path="/weight-diary" element={<WeightDiary user={user} />} />
         </Routes>
       </main>
       <Footer />

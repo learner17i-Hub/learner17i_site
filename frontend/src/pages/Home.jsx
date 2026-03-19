@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button, Typography, Space, Card, Row, Col } from 'antd'
 import {
-  ReadOutlined, SolutionOutlined, MessageOutlined, GithubOutlined, ArrowRightOutlined,
+  ReadOutlined, SolutionOutlined, MessageOutlined, GithubOutlined, ArrowRightOutlined, LineChartOutlined
 } from '@ant-design/icons'
 
 const { Title, Paragraph } = Typography
@@ -26,11 +26,10 @@ const features = [
     link: '/chat',
   },
   {
-    icon: <GithubOutlined style={{ fontSize: 36, color: '#333' }} />,
-    title: 'GitHub',
-    desc: '浏览我的开源项目与代码仓库',
-    link: 'https://github.com/learner17i-Hub',
-    external: true,
+    icon: <LineChartOutlined style={{ fontSize: 36, color: '#fa8c16' }} />,
+    title: '减肥日记',
+    desc: '记录每日体重变化与运动日常',
+    link: '/weight-diary',
   },
 ]
 

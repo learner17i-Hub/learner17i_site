@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
@@ -8,9 +8,22 @@ from .serializers import (
     CategorySerializer, TagSerializer, CommentSerializer,
 )
 
+class IsAdminOrReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return bool(request.user and request.user.is_staff)
 
-class PostListView(generics.ListAPIView):
-    serializer_class = PostListSerializer
+class PostListView(generics.ListCreateAPIView):
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return PostDetailSerializer
+        return PostListSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     def get_queryset(self):
         qs = Post.objects.filter(is_published=True)
@@ -26,9 +39,10 @@ class PostListView(generics.ListAPIView):
         return qs.distinct()
 
 
-class PostDetailView(generics.RetrieveAPIView):
+class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PostDetailSerializer
-    queryset = Post.objects.filter(is_published=True)
+    queryset = Post.objects.all()
+    permission_classes = [IsAdminOrReadOnly]
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -38,16 +52,18 @@ class PostDetailView(generics.RetrieveAPIView):
         return Response(serializer.data)
 
 
-class CategoryListView(generics.ListAPIView):
+class CategoryListView(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
     pagination_class = None
+    permission_classes = [IsAdminOrReadOnly]
 
 
-class TagListView(generics.ListAPIView):
+class TagListView(generics.ListCreateAPIView):
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
     pagination_class = None
+    permission_classes = [IsAdminOrReadOnly]
 
 
 class CommentCreateView(APIView):

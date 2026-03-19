@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'apps.resume',
     'apps.chat',
     'apps.accounts',
+    'apps.weight_loss',
 ]
 
 MIDDLEWARE = [

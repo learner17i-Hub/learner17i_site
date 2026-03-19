@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/resume/', include('apps.resume.urls')),
     path('api/chat/', include('apps.chat.urls')),
     path('api/accounts/', include('apps.accounts.urls')),
+    path('api/weight_loss/', include('apps.weight_loss.urls')),
 ]
 
 if settings.DEBUG:

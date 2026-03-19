@@ -31,6 +31,7 @@ class RegisterView(APIView):
         return Response({
             'id': user.id,
             'username': user.username,
+            'is_staff': user.is_staff,
         }, status=status.HTTP_201_CREATED)
 
 
@@ -47,6 +48,7 @@ class LoginView(APIView):
         return Response({
             'id': user.id,
             'username': user.username,
+            'is_staff': user.is_staff,
         })
 
 
@@ -63,4 +65,5 @@ class MeView(APIView):
         return Response({
             'id': request.user.id,
             'username': request.user.username,
+            'is_staff': request.user.is_staff,
         })

@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Typography, Tag, Spin, Card, Divider, Input, Button, List, message, Space } from 'antd'
-import { ArrowLeftOutlined, EyeOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, EyeOutlined, CalendarOutlined, UserOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 import api from '../api'
 
 const { Title, Text, Paragraph } = Typography
 
-export default function BlogDetail() {
+export default function BlogDetail({ user }) {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [commentName, setCommentName] = useState('')
@@ -18,10 +19,25 @@ export default function BlogDetail() {
   const fetchPost = () => {
     api.get(`/blog/posts/${id}/`)
       .then(r => setPost(r.data))
+      .catch((e) => {
+        if (e.response?.status === 404) setPost(null)
+      })
       .finally(() => setLoading(false))
   }
 
   useEffect(() => { fetchPost() }, [id])
+
+  const handleDelete = async () => {
+    if (window.confirm('确定要删除这篇文章吗？操作不可恢复。')) {
+      try {
+        await api.delete(`/blog/posts/${id}/`)
+        message.success('删除成功')
+        navigate('/blog')
+      } catch {
+        message.error('删除失败')
+      }
+    }
+  }
 
   const handleComment = async () => {
     if (!commentName.trim() || !commentContent.trim()) {
@@ -45,15 +61,25 @@ export default function BlogDetail() {
   }
 
   if (loading) return <div style={{ textAlign: 'center', padding: 80 }}><Spin size="large" /></div>
-  if (!post) return <div style={{ textAlign: 'center', padding: 80 }}>文章不存在</div>
+  if (!post) return <div style={{ textAlign: 'center', padding: 80 }}>文章不存在或已删除</div>
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 24px' }}>
-      <Link to="/blog">
-        <Button type="link" icon={<ArrowLeftOutlined />} style={{ paddingLeft: 0, marginBottom: 16 }}>
-          返回列表
-        </Button>
-      </Link>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Link to="/blog">
+          <Button type="link" icon={<ArrowLeftOutlined />} style={{ paddingLeft: 0 }}>
+            返回列表
+          </Button>
+        </Link>
+        {user?.is_staff && (
+          <Space>
+            <Link to={`/blog/${id}/edit`}>
+              <Button icon={<EditOutlined />}>编辑</Button>
+            </Link>
+            <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>删除</Button>
+          </Space>
+        )}
+      </div>
 
       <Title level={2}>{post.title}</Title>
       <Space style={{ marginBottom: 24 }} split={<Text type="secondary">·</Text>}>

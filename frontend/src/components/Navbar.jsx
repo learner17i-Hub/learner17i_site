@@ -3,6 +3,7 @@ import { Menu, Button, Space } from 'antd'
 import {
   HomeOutlined, ReadOutlined, SolutionOutlined,
   MessageOutlined, GithubOutlined, UserOutlined, LogoutOutlined,
+  LineChartOutlined
 } from '@ant-design/icons'
 
 const NAV_ITEMS = [
@@ -10,6 +11,7 @@ const NAV_ITEMS = [
   { key: '/blog', label: '博客', icon: <ReadOutlined /> },
   { key: '/resume', label: '简历', icon: <SolutionOutlined /> },
   { key: '/chat', label: '聊天室', icon: <MessageOutlined /> },
+  { key: '/weight-diary', label: '减肥日记', icon: <LineChartOutlined /> },
 ]
 
 export default function Navbar({ user, onLogout }) {

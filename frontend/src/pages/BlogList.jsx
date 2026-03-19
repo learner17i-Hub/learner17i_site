@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Card, Tag, Input, Space, Select, Typography, Pagination, Spin, Empty, Row, Col } from 'antd'
+import { Card, Tag, Input, Space, Select, Typography, Pagination, Spin, Empty, Row, Col, Button } from 'antd'
 import { EyeOutlined, CalendarOutlined, SearchOutlined } from '@ant-design/icons'
 import api from '../api'
 
 const { Title, Paragraph, Text } = Typography
 
-export default function BlogList() {
+export default function BlogList({ user }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [posts, setPosts] = useState([])
   const [categories, setCategories] = useState([])
@@ -53,8 +53,15 @@ export default function BlogList() {
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
-      <Title level={2}>博客</Title>
-
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={2} style={{ margin: 0 }}>博客</Title>
+        {user?.is_staff && (
+          <Link to="/blog/new">
+            <Button type="primary">写新文章</Button>
+          </Link>
+        )}
+      </div>
+      <br/>
       {/* Filters */}
       <Space wrap style={{ marginBottom: 24 }}>
         <Input.Search

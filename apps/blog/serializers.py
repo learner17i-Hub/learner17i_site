@@ -47,11 +47,19 @@ class PostDetailSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author_name = serializers.CharField(source='author.username', read_only=True)
     comments = serializers.SerializerMethodField()
+    
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), source='category', write_only=True, required=False, allow_null=True
+    )
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), source='tags', many=True, write_only=True, required=False
+    )
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'summary', 'content', 'cover', 'category',
-                  'tags', 'author_name', 'views', 'created_at', 'updated_at', 'comments']
+        fields = ['id', 'title', 'summary', 'content', 'cover', 'category', 'category_id',
+                  'tags', 'tag_ids', 'author_name', 'views', 'is_published', 'created_at', 'updated_at', 'comments']
+        read_only_fields = ['author_name', 'views', 'created_at', 'updated_at']
 
     def get_comments(self, obj):
         top_level = obj.comments.filter(parent__isnull=True)
