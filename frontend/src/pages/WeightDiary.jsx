@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, DatePicker, InputNumber, Upload, message, Table, Card, Row, Col, Modal, Typography, Space, Image } from 'antd';
-import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import { UploadOutlined, PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../api';
 import dayjs from 'dayjs';
@@ -12,11 +12,23 @@ function normUploadFileList(e) {
   return e?.fileList ?? [];
 }
 
+/** 将活动文本按行拆成多条（空行忽略） */
+function activityLines(activity) {
+  if (!activity || typeof activity !== 'string') return [];
+  return activity
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export default function WeightDiary({ user }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
 
   const fetchRecords = async () => {
     try {
@@ -67,6 +79,38 @@ export default function WeightDiary({ user }) {
     }
   };
 
+  const openEdit = (record) => {
+    setEditingRecord(record);
+    editForm.setFieldsValue({
+      activity: record.activity ?? '',
+      weight: record.weight != null ? Number(record.weight) : undefined,
+      date: record.date ? dayjs(record.date) : undefined,
+    });
+    setEditModalOpen(true);
+  };
+
+  const onEditFinish = async (values) => {
+    if (!user || !editingRecord) return;
+    setLoading(true);
+    try {
+      await api.patch(`/weight_loss/records/${editingRecord.id}/`, {
+        activity: values.activity ?? '',
+        weight: values.weight,
+        date: values.date.format('YYYY-MM-DD'),
+      });
+      message.success('记录已更新');
+      setEditModalOpen(false);
+      setEditingRecord(null);
+      editForm.resetFields();
+      fetchRecords();
+    } catch (error) {
+      console.error('Error updating record:', error);
+      message.error('更新记录失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const columns = [
     {
       title: '日期',
@@ -78,6 +122,19 @@ export default function WeightDiary({ user }) {
       title: '活动记录',
       dataIndex: 'activity',
       key: 'activity',
+      render: (text) => {
+        const lines = activityLines(text);
+        if (lines.length === 0) return <span style={{ color: '#999' }}>—</span>;
+        return (
+          <ul style={{ margin: 0, paddingLeft: 20, marginBottom: 0 }}>
+            {lines.map((line, i) => (
+              <li key={i} style={{ lineHeight: 1.6 }}>
+                {line}
+              </li>
+            ))}
+          </ul>
+        );
+      },
     },
     {
       title: '体重 (kg)',
@@ -106,6 +163,17 @@ export default function WeightDiary({ user }) {
           </Image.PreviewGroup>
         );
       },
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 96,
+      fixed: 'right',
+      render: (_, record) => (
+        <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEdit(record)}>
+          修改
+        </Button>
+      ),
     },
   ];
 
@@ -157,6 +225,7 @@ export default function WeightDiary({ user }) {
           dataSource={records}
           columns={columns}
           rowKey="id"
+          scroll={{ x: 'max-content' }}
           pagination={{ pageSize: 10, position: ['bottomCenter'] }}
         />
       </Card>
@@ -177,7 +246,10 @@ export default function WeightDiary({ user }) {
             label="活动记录"
             rules={[{ required: true, message: '请简述您今天的活动！' }]}
           >
-            <Input.TextArea rows={4} placeholder="例如：跑步机跑步2km，室内单车骑行10km..." />
+            <Input.TextArea
+              rows={4}
+              placeholder={'多条请每行一条，例如：\n跑步机跑步 2km\n室内单车骑行 10km'}
+            />
           </Form.Item>
 
           <Row gutter={16}>
@@ -218,6 +290,69 @@ export default function WeightDiary({ user }) {
               <Button onClick={() => setIsModalOpen(false)}>取消</Button>
               <Button type="primary" htmlType="submit" loading={loading}>
                 保存记录
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="修改记录"
+        open={editModalOpen}
+        onCancel={() => {
+          setEditModalOpen(false);
+          setEditingRecord(null);
+          editForm.resetFields();
+        }}
+        footer={null}
+        destroyOnClose
+      >
+        <Form form={editForm} layout="vertical" onFinish={onEditFinish} style={{ marginTop: '24px' }}>
+          <Form.Item
+            name="activity"
+            label="活动记录"
+            rules={[{ required: true, message: '请填写活动记录！' }]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder={'多条请每行一条，历史列表中会分条显示'}
+            />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="weight"
+                label="体重 (kg)"
+                rules={[{ required: true, message: '请输入体重！' }]}
+              >
+                <InputNumber min={0} max={500} step={0.1} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="date"
+                label="日期"
+                rules={[{ required: true, message: '请选择日期！' }]}
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+            <Space>
+              <Button
+                onClick={() => {
+                  setEditModalOpen(false);
+                  setEditingRecord(null);
+                  editForm.resetFields();
+                }}
+              >
+                取消
+              </Button>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                保存修改
               </Button>
             </Space>
           </Form.Item>
