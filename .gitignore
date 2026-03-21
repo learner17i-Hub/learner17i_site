@@ -11,6 +11,10 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# User uploads (MEDIA_ROOT); do not commit local debug / production uploads
+media/*
+!media/.gitkeep
+
 # Environments
 venv/
 env/
