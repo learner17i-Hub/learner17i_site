@@ -7,6 +7,11 @@ import dayjs from 'dayjs';
 
 const { Title } = Typography;
 
+function normUploadFileList(e) {
+  if (Array.isArray(e)) return e;
+  return e?.fileList ?? [];
+}
+
 export default function WeightDiary({ user }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,21 +45,16 @@ export default function WeightDiary({ user }) {
     formData.append('weight', values.weight);
     formData.append('date', values.date.format('YYYY-MM-DD'));
     if (values.activity) formData.append('activity', values.activity);
-    
-    if (values.pictures && values.pictures.fileList.length > 0) {
-      values.pictures.fileList.forEach(file => {
-        if (file.originFileObj) {
-          formData.append('pictures', file.originFileObj);
-        }
-      });
-    }
+
+    const pictureList = Array.isArray(values.pictures) ? values.pictures : [];
+    pictureList.forEach((file) => {
+      if (file.originFileObj) {
+        formData.append('pictures', file.originFileObj);
+      }
+    });
 
     try {
-      await api.post('/weight_loss/records/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await api.post('/weight_loss/records/', formData);
       message.success('记录添加成功！');
       form.resetFields();
       setIsModalOpen(false);
@@ -94,7 +94,7 @@ export default function WeightDiary({ user }) {
         return (
           <Image.PreviewGroup>
             <Space>
-              {record.images.map((imgObj, index) => (
+              {record.images.map((imgObj) => (
                 <Image
                   key={imgObj.id}
                   src={imgObj.image}
@@ -117,9 +117,9 @@ export default function WeightDiary({ user }) {
     <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <Title level={2} style={{ margin: 0 }}>减肥日志</Title>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
           size="large"
           style={{ borderRadius: '8px' }}
           onClick={() => setIsModalOpen(true)}
@@ -127,7 +127,7 @@ export default function WeightDiary({ user }) {
           添加活动
         </Button>
       </div>
-      
+
       <Card title="体重变化趋势" bordered={false} style={{ marginBottom: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
         <div style={{ width: '100%', height: 350 }}>
           <ResponsiveContainer>
@@ -135,17 +135,17 @@ export default function WeightDiary({ user }) {
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" tick={{ fill: '#888' }} />
               <YAxis domain={['auto', 'auto']} tick={{ fill: '#888' }} />
-              <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+              <Tooltip
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
               />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="weight" 
-                stroke="#1677ff" 
+              <Line
+                type="monotone"
+                dataKey="weight"
+                stroke="#1677ff"
                 strokeWidth={3}
-                activeDot={{ r: 8, strokeWidth: 0 }} 
-                name="体重 (kg)" 
+                activeDot={{ r: 8, strokeWidth: 0 }}
+                name="体重 (kg)"
               />
             </LineChart>
           </ResponsiveContainer>
@@ -202,7 +202,12 @@ export default function WeightDiary({ user }) {
             </Col>
           </Row>
 
-          <Form.Item name="pictures" label="进度图片（可选，多张）">
+          <Form.Item
+            name="pictures"
+            label="进度图片（可选，多张）"
+            valuePropName="fileList"
+            getValueFromEvent={normUploadFileList}
+          >
             <Upload beforeUpload={() => false} multiple listType="picture" accept="image/*">
               <Button icon={<UploadOutlined />}>点击上传多张图片</Button>
             </Upload>
